@@ -1,0 +1,102 @@
+import streamlit as st
+import numpy as np
+import plotly.graph_objects as go
+import math
+
+# Configuração da página em modo expandido
+st.set_page_config(page_title="Laboratório de Trigonometria", layout="wide")
+
+# ==========================================
+# CABEÇALHO E LOGO
+# ==========================================
+col_logo, col_titulo = st.columns([1, 4])
+
+with col_logo:
+    try:
+        st.image("logo_benjamin_constant.png", use_container_width=True)
+    except:
+        st.subheader("Colégio Benjamin Constant")
+
+with col_titulo:
+    st.title("Laboratório Interativo de Funções Trigonométricas")
+    st.markdown("Altere os coeficientes para observar as transformações na onda em tempo real.")
+
+st.markdown("---")
+
+# ==========================================
+# NOVA PROPORÇÃO DE TELA (LADO A LADO)
+# ==========================================
+# Dividindo a tela principal em duas colunas maiores: 
+# Coluna 1 (40% da largura) para os controles ficarem grandes e legíveis
+# Coluna 2 (60% da largura) para o gráfico
+col_controles, col_grafico = st.columns([2, 3])
+
+with col_controles:
+    st.subheader("⚙️ Ajuste dos Coeficientes")
+    st.latex(r"f(x) = a \cdot \sin(b \cdot x + c) + d")
+    
+    st.markdown("### Escolha a Função:")
+    funcao = st.radio(
+        "Visualizar:", 
+        ["Seno", "Cosseno", "Ambas"], 
+        horizontal=True, 
+        label_visibility="collapsed"
+    )
+    
+    st.markdown("### Parâmetros da Equação:")
+    # Sliders agora ocupam um espaço muito maior e mais confortável para cliques e toque
+    a = st.slider("Amplitude (a) - Estica/Comprime verticalmente", -5.0, 5.0, 1.0, 0.1)
+    b = st.slider("Frequência (b) - Altera o período", -5.0, 5.0, 1.0, 0.1)
+    c = st.slider("Fase (c) - Deslocamento horizontal", -float(math.pi), float(math.pi), 0.0, 0.1, format="%.2f")
+    d = st.slider("Deslocamento Vertical (d) - Sobe/Desce a função", -5.0, 5.0, 0.0, 0.1)
+
+with col_grafico:
+    st.subheader("📊 Comportamento Gráfico")
+    
+    # OTIMIZAÇÃO DE FLUIDEZ: Reduzido de 1000 para 400 pontos para cálculo instantâneo
+    x = np.linspace(-3 * np.pi, 3 * np.pi, 400)
+    
+    fig = go.Figure()
+    
+    # OTIMIZAÇÃO DE PERFORMANCE: Uso de Scattergl (WebGL) para renderização ultra rápida no navegador
+    if funcao in ["Seno", "Ambas"]:
+        y_sin = a * np.sin(b * x + c) + d
+        fig.add_trace(go.Scattergl(
+            x=x, y=y_sin, mode='lines', 
+            name=f"f(x) = {a} · sin({b}x + {c:.2f}) + {d}",
+            line=dict(color='#2563EB', width=3.5) # Azul destacado
+        ))
+        
+    if funcao in ["Cosseno", "Ambas"]:
+        y_cos = a * np.cos(b * x + c) + d
+        fig.add_trace(go.Scattergl(
+            x=x, y=y_cos, mode='lines', 
+            name=f"g(x) = {a} · cos({b}x + {c:.2f}) + {d}",
+            line=dict(color='#DC2626', width=3.5) # Vermelho destacado
+        ))
+
+    # FORÇANDO FUNDO CLARO E ALTO CONTRASTE
+    fig.update_layout(
+        template="plotly_white", # Força o tema claro no gráfico independente do sistema
+        paper_bgcolor="white",
+        plot_bgcolor="white",
+        xaxis_title="Eixo x (Radianos)",
+        yaxis_title="Eixo y",
+        height=550,
+        margin=dict(l=20, r=20, t=20, b=20),
+        xaxis=dict(
+            tickmode='array',
+            tickvals=[-3*math.pi, -2*math.pi, -math.pi, 0, math.pi, 2*math.pi, 3*math.pi],
+            ticktext=['-3π', '-2π', '-π', '0', 'π', '2π', '3π'],
+            zeroline=True, zerolinewidth=2.5, zerolinecolor='#1E293B', # Eixo X bem marcado
+            gridcolor='#E2E8F0' # Linhas de grade cinzas claras e visíveis
+        ),
+        yaxis=dict(
+            zeroline=True, zerolinewidth=2.5, zerolinecolor='#1E293B', # Eixo Y bem marcado
+            gridcolor='#E2E8F0',
+            range=[-6.5, 6.5] # FIXA O EIXO Y: impede o gráfico de ficar pulando/mudando de escala
+        ),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+    )
+    
+    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
