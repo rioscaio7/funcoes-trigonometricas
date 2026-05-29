@@ -1,0 +1,89 @@
+import streamlit as st
+import numpy as np
+import plotly.graph_objects as go
+import math
+
+# Configuração da página para ocupar toda a largura e ter um título
+st.set_page_config(page_title="Estudo Trigonométrico", layout="wide")
+
+# ==========================================
+# CABEÇALHO E LOGO
+# ==========================================
+col1, col2 = st.columns([1, 5])
+
+with col1:
+    # O Streamlit vai procurar essa imagem na mesma pasta do script
+    try:
+        st.image("logo_benjamin_constant.png", use_container_width=True)
+    except FileNotFoundError:
+        st.warning("⚠️ Salve o logo do colégio como 'logo_benjamin_constant.png' na mesma pasta deste script para exibí-lo aqui.")
+
+with col2:
+    st.title("Explorando Funções Trigonométricas")
+    st.markdown("Altere os parâmetros no menu lateral para visualizar as transformações nos gráficos das funções!")
+
+st.markdown("---")
+
+# ==========================================
+# MENU LATERAL (CONTROLES INTERATIVOS)
+# ==========================================
+st.sidebar.header("⚙️ Parâmetros da Função")
+st.sidebar.markdown("Ajuste os valores para a função no formato:")
+st.sidebar.latex(r"f(x) = a \cdot \sin(b \cdot x + c) + d")
+
+funcao_escolhida = st.sidebar.radio(
+    "Qual função você quer estudar?",
+    ["Seno", "Cosseno", "Ambas"]
+)
+
+st.sidebar.markdown("### Modificadores")
+# Sliders: (Rótulo, Valor Mínimo, Valor Máximo, Valor Inicial, Passo)
+a = st.sidebar.slider("Amplitude (a) - Estica/Comprime verticalmente", -5.0, 5.0, 1.0, 0.1)
+b = st.sidebar.slider("Frequência (b) - Altera o período", -5.0, 5.0, 1.0, 0.1)
+c = st.sidebar.slider("Fase (c) - Desloca horizontalmente", -float(math.pi), float(math.pi), 0.0, 0.1)
+d = st.sidebar.slider("Deslocamento (d) - Move verticalmente", -5.0, 5.0, 0.0, 0.1)
+
+# ==========================================
+# CÁLCULO DOS DADOS MATEMÁTICOS
+# ==========================================
+# Eixo X variando de -3π a 3π com 1000 pontos para o gráfico ficar suave
+x = np.linspace(-3 * np.pi, 3 * np.pi, 1000)
+
+# Eixo Y baseado nos parâmetros
+y_sin = a * np.sin(b * x + c) + d
+y_cos = a * np.cos(b * x + c) + d
+
+# ==========================================
+# CONSTRUÇÃO DO GRÁFICO (PLOTLY)
+# ==========================================
+fig = go.Figure()
+
+if funcao_escolhida in ["Seno", "Ambas"]:
+    nome_sin = f"f(x) = {a} · sin({b}x + {c:.2f}) + {d}"
+    fig.add_trace(go.Scatter(x=x, y=y_sin, mode='lines', name=nome_sin, line=dict(color='#1f77b4', width=3)))
+
+if funcao_escolhida in ["Cosseno", "Ambas"]:
+    nome_cos = f"g(x) = {a} · cos({b}x + {c:.2f}) + {d}"
+    fig.add_trace(go.Scatter(x=x, y=y_cos, mode='lines', name=nome_cos, line=dict(color='#d62728', width=3)))
+
+# Melhorando a estética do gráfico
+fig.update_layout(
+    xaxis_title="Eixo x (radianos)",
+    yaxis_title="Eixo y",
+    xaxis=dict(
+        tickmode='array',
+        tickvals=[-3*math.pi, -2*math.pi, -math.pi, 0, math.pi, 2*math.pi, 3*math.pi],
+        ticktext=['-3π', '-2π', '-π', '0', 'π', '2π', '3π'],
+        zeroline=True, zerolinewidth=2, zerolinecolor='black'
+    ),
+    yaxis=dict(
+        zeroline=True, zerolinewidth=2, zerolinecolor='black'
+    ),
+    template="plotly_white",
+    height=600,
+    hovermode="x unified",
+    legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01)
+)
+
+# Exibe o gráfico na tela principal
+st.plotly_chart(fig, use_container_width=True)
